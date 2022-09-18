@@ -14,5 +14,30 @@
         name:
           - spotify
           - slack
-          - wezterm
           - zoom
+
+    - name: Overlay distrobox
+      community.general.rpm_ostree_pkg:
+        name: distrobox
+        state: present
+
+    - name: Overlay logiops
+      community.general.rpm_ostree_pkg:
+        name: logiops
+        state: present
+
+    - name: add vscode yum repository
+      become: true
+      ansible.builtin.yum_repository:
+        state: present
+        name: vscode
+        description: vscode
+        baseurl: https://packages.microsoft.com/yumrepos/vscode
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+
+    - name: overlay vscode
+      community.general.rpm_ostree_pkg:
+        name: code
+        state: present
