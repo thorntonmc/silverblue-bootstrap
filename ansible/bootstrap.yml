@@ -26,6 +26,14 @@
         name: logiops
         state: present
 
+    - name: Overlay l2tp VPN packages
+      community.general.rpm_ostree_pgk:
+        name:
+          - NetworkManager-l2tp.x86_64
+          - NetworkManager-l2tp-gnome.x86_64
+          - xl2tpd
+          - strongswan
+
     - name: add vscode yum repository
       become: true
       ansible.builtin.yum_repository:
