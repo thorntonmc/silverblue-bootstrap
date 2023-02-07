@@ -2,54 +2,43 @@
 - name: dev-machine
   hosts: localhost
   tasks:
+    - name: Check for flathub deny-list
+      become: true
+      ansible.builtin.stat:
+        path: /usr/share/flatpak/fedora-flathub.filter
+      register: flathub_filter
+
+    - name: Purge flathub if deny list exists
+      become: true
+      community.general.flatpak_remote:
+         name: flathub
+         state: absent
+      when: flathub_filter.stat.exists
+    
     - name: Add the flathub remote
       community.general.flatpak_remote:
         name: flathub
         state: present
         flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
 
+    - name: Remove deny list
+      become: true
+      ansible.builtin.file:
+         path: /usr/share/flatpak/fedora-flathub.filter
+         dest: /usr/share/flatpak/fedora-flathub.filter.old
+      when: flathub_filter.stat.exists
+
     - name: Install flatpaks
       become: true
       community.general.flatpak:
         remote: flathub
         name:
-          - spotify
-          - slack
-          - zoom
-
-    - name: Overlay distrobox
-      community.general.rpm_ostree_pkg:
-        name: distrobox
-        state: present
-
-    - name: Overlay logiops
-      community.general.rpm_ostree_pkg:
-        name: logiops
-        state: present
-
-    - name: Overlay l2tp VPN packages
-      community.general.rpm_ostree_pkg:
-        name:
-          - NetworkManager-l2tp.x86_64
-          - NetworkManager-l2tp-gnome.x86_64
-          - xl2tpd
-          - strongswan
-
-    - name: add vscode yum repository
-      become: true
-      ansible.builtin.yum_repository:
-        state: present
-        name: vscode
-        description: vscode
-        baseurl: https://packages.microsoft.com/yumrepos/vscode
-        enabled: 1
-        gpgcheck: 1
-        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
-
-
-    - name: overlay vscode
-      community.general.rpm_ostree_pkg:
-        name: code
+          - org.gnome.Extensions
+          - com.mattjakeman.ExtensionManager
+          - net.ankiweb.Anki
+          - com.spotify.Client
+          - com.slack.Slack
+          - us.zoom.Zoom
         state: present
 
     - name: add 1password yum repository
@@ -63,10 +52,34 @@
         gpgcheck: 1
         gpgkey: https://downloads.1password.com/linux/keys/1password.asc
 
-    
-    - name: overlay 1password
-      community.general.rpm_ostree_pkg:
-        name: 1password
+    - name: add vscode yum repository
+      become: true
+      ansible.builtin.yum_repository:
         state: present
+        name: vscode
+        description: vscode
+        baseurl: https://packages.microsoft.com/yumrepos/vscode
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
 
-
+    - name: Install packages
+      become: true
+      ansible.builtin.dnf:
+        name:
+          - 1password
+          - code
+          - distrobox
+          - logiops
+          - NetworkManager-l2tp.x86_64
+          - NetworkManager-l2tp-gnome.x86_64
+          - strongswan
+          - xl2tpd
+        state: present
+ 
+    - name: Enable logid.service
+      become: true
+      ansible.builtin.systemd:
+        name: logid.service
+        enabled: true
+        state: started

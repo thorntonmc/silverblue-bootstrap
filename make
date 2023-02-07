@@ -9,6 +9,3 @@ fi
 
 pipenv install
 pipenv run ansible-playbook -K ./ansible/bootstrap.yml
-rpm-ostree update
-
-echo "Complete. Reboot is required to finish installing layered applications"
